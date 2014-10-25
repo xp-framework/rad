@@ -1,0 +1,35 @@
+<?php namespace xp_framework;
+
+/**
+ * The RAD module allows for rapid application development by not throwing
+ * exceptions for warnings.
+ *
+ * @see  https://github.com/xp-framework/rfc/issues/291
+ */
+module rad {
+
+  /** @return void */
+  public function initialize() {
+    set_error_handler(function($code, $msg, $file, $line) {
+      if (E_RECOVERABLE_ERROR === $code) {
+        __error($code, $msg, $file, $line);
+      } else if (0 === error_reporting() || null === $file) {
+        return;
+      } else {
+        $bt= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $class= (isset($bt[1]['class']) ? $bt[1]['class'] : null);
+        $method= (isset($bt[1]['function']) ? $bt[1]['function'] : null);
+
+        if (!isset(\xp::$errors[$file][$line][$msg])) {
+          \xp::$errors[$file][$line][$msg]= [
+            'class'   => $class,
+            'method'  => $method,
+            'cnt'     => 1
+          ];
+        } else {
+          \xp::$errors[$file][$line][$msg]['cnt']++;
+        }
+      }
+    });
+  }
+}
